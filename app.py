@@ -1,64 +1,26 @@
-from pyrogram import Client, filters
-import json
-import re
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 import os
 
-# تنظیمات
-api_id = 25584288     # 👈 API ID شما
-api_hash = "ba2aeba66be85240a381afce80d0834b"  # 👈 API HASH شما
-admin_id = 1848591768  # 👈 آیدی عددی شما
+DOWNLOAD_DIR = "/home/a1161163"  # مسیر ذخیره روی VPS
+os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-# نام فایل ذخیره وضعیت
-state_file = "state.json"
+TOKEN = "8186718003:AAGoJsGyE7SajlKv2SDbII5_NUuo-ptk40A"
 
-# تابع بارگذاری وضعیت
-def load_state():
-    if os.path.exists(state_file):
-        with open(state_file, "r") as f:
-            data = json.load(f)
-            return data.get("enabled", True)
-    return True
+def start(update: Update, context: CallbackContext):
+    update.message.reply_text("سلام! فایل CSV رو اینجا بفرست.")
 
-# تابع ذخیره وضعیت
-def save_state(enabled):
-    with open(state_file, "w") as f:
-        json.dump({"enabled": enabled}, f)
+def handle_file(update: Update, context: CallbackContext):
+    file = update.message.document.get_file()
+    filename = os.path.join(DOWNLOAD_DIR, update.message.document.file_name)
+    file.download(filename)
+    update.message.reply_text(f"فایل دریافت شد و ذخیره شد: {filename}")
 
-# تشخیص کد لاگین
-def is_login_code(text):
-    if not text:
-        return False
-    patterns = [
-        r"\b\d{5,6}\b",  # کد عددی ۵ یا ۶ رقمی
-        r"(کد ورود|کد تایید|Login code|Verification code)"
-    ]
-    return any(re.search(p, text, re.IGNORECASE) for p in patterns)
+updater = Updater(TOKEN)
+dp = updater.dispatcher
 
-# ساخت کلاینت
-app = Client("anti_login", api_id=api_id, api_hash=api_hash)
+dp.add_handler(CommandHandler("start", start))
+dp.add_handler(MessageHandler(Filters.document, handle_file))
 
-# روشن کردن آنتی‌لاگین
-@app.on_message(filters.command("on") & filters.user(admin_id))
-async def turn_on(client, message):
-    save_state(True)
-    await message.reply("✅ آنتی‌لاگین فعال شد.")
-
-# خاموش کردن آنتی‌لاگین
-@app.on_message(filters.command("off") & filters.user(admin_id))
-async def turn_off(client, message):
-    save_state(False)
-    await message.reply("❌ آنتی‌لاگین غیرفعال شد.")
-
-# بررسی پیام‌های متنی (در همه چت‌ها)
-@app.on_message(filters.text)
-async def scan_message(client, message):
-    if not load_state():
-        return
-    if is_login_code(message.text):
-        try:
-            await message.forward(admin_id)
-        except Exception as e:
-            print("❗ خطا در ارسال پیام:", e)
-
-# اجرای برنامه
-app.run()
+updater.start_polling()
+updater.idle()
