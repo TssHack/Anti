@@ -13,7 +13,7 @@ import time
 # Configuration
 TOKEN = "8186718003:AAGoJsGyE7SajlKv2SDbII5_NUuo-ptk40A"  # استفاده از متغیر محیطی بهتر است
 DOWNLOAD_DIR = Path("/home/a1161163")
-MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB limit
+MAX_FILE_SIZE = 40000 * 1024 * 1024  # 50MB limit
 ALLOWED_EXTENSIONS = {'.csv', '.xlsx', '.xls', '.txt', '.json'}
 
 # Setup logging
